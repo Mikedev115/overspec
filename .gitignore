@@ -1,0 +1,8 @@
+# ไบนารี llama.cpp / CUDA — ดาวน์โหลดเอง ไม่ขึ้นรีโป
+runtime/*.dll
+runtime/*.exe
+runtime-upstream/
+
+# log และผลรันบนเครื่องนี้
+*.log
+*.out
