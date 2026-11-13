@@ -1,46 +1,100 @@
-# probe_budget.ps1 — อ่านงบ VRAM จริงของ Windows (WDDM) แยกตามโปรเซส
-# ใช้: pwsh -File overspec/probe_budget.ps1 [-MinMB 100]
-# เหตุผล: llama.cpp --fit ใช้ค่าจาก cudaMemGetInfo ("free device memory") ซึ่งบน WDDM
+# probe_budget.ps1 — อ่านงบ VRAM จริงของ Windows (WDDM)
+# ใช้: pwsh -File overspec/probe_budget.ps1 [-Json] [-MinMB 100]
+#
+# ทำไมต้องมี: llama.cpp --fit ใช้ "free device memory" จาก backend ซึ่งบน WDDM
 # ไม่เท่ากับงบที่ OS ให้จริง และไม่บอกว่าแอปอื่นถือ VRAM อยู่เท่าไร
-param([int]$MinMB = 100)
+param(
+    [switch]$Json,
+    [int]$MinMB = 0
+)
 
 $ErrorActionPreference = 'Stop'
-$counter = '\GPU Process Memory(*)\Dedicated Usage'
+$counterPath = '\GPU Process Memory(*)\Dedicated Usage'
+$MB = 1MB
 
-Write-Output "## GPU Process Memory (Dedicated, MB)"
+# --- 1. VRAM แยกตามโปรเซส -------------------------------------------------
+$counters = @()
+$counterError = $null
 try {
-    $samples = (Get-Counter -Counter $counter -ErrorAction Stop).CounterSamples
-    $rows = $samples |
-        Where-Object { $_.CookedValue -ge ($MinMB * 1MB) } |
-        Sort-Object CookedValue -Descending |
-        Select-Object -First 15
-    if (-not $rows) { Write-Output "  (ไม่มีโปรเซสใดถือเกิน $MinMB MB)" }
-    foreach ($r in $rows) {
-        $mb = [math]::Round($r.CookedValue / 1MB)
-        Write-Output ("  {0,6} MB  {1}" -f $mb, $r.InstanceName)
+    $samples = (Get-Counter -Counter $counterPath -ErrorAction Stop).CounterSamples
+    foreach ($s in $samples) {
+        $mib = [int][math]::Round($s.CookedValue / $MB)
+        if ($mib -ge $MinMB) {
+            $counters += [pscustomobject]@{ instance = $s.InstanceName; mib = $mib }
+        }
     }
-    $sum = ($samples | Measure-Object -Property CookedValue -Sum).Sum
-    Write-Output ("  --- รวมทุกโปรเซส: {0} MB" -f [math]::Round($sum / 1MB))
 } catch {
-    Write-Output "  อ่าน counter ไม่ได้: $($_.Exception.Message)"
+    $counterError = $_.Exception.Message
 }
 
-Write-Output ""
-Write-Output "## nvidia-smi"
-$smi = & nvidia-smi --query-gpu=memory.total,memory.used,memory.reserved,memory.free --format=csv,noheader 2>&1
-Write-Output "  total, used, reserved, free (MiB) = $smi"
+# --- 2. nvidia-smi ---------------------------------------------------------
+$smi = $null
+try {
+    $line = (& nvidia-smi --query-gpu=memory.total,memory.used,memory.reserved,memory.free `
+                --format=csv,noheader,nounits 2>$null | Select-Object -First 1)
+    if ($line) {
+        $p = @($line -split ',' | ForEach-Object { $_.Trim() })
+        if ($p.Count -eq 4 -and ($p -join '') -match '^\d+$') {
+            $smi = [pscustomobject]@{
+                total_mib    = [int]$p[0]
+                used_mib     = [int]$p[1]
+                reserved_mib = [int]$p[2]
+                free_mib     = [int]$p[3]
+            }
+        }
+    }
+} catch {
+    $smi = $null
+}
 
-Write-Output ""
-Write-Output "## sysmem fallback policy (driver)"
-$keys = @(
+# --- 3. นโยบาย sysmem fallback ของไดรเวอร์ ---------------------------------
+$policy = 'default'
+$policyKeys = @()
+$candidateKeys = @(
     'HKLM:\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global\NVTweak',
     'HKLM:\SOFTWARE\NVIDIA Corporation\Global\NVTweak'
 )
-foreach ($k in $keys) {
-    if (Test-Path $k) {
-        $props = Get-ItemProperty $k
-        $hit = $props.PSObject.Properties | Where-Object { $_.Name -match '(?i)cuda.*(fallback|sysmem)|sysmem' }
-        if ($hit) { foreach ($h in $hit) { Write-Output ("  {0}: {1}" -f $h.Name, $h.Value) } }
+foreach ($key in $candidateKeys) {
+    if (-not (Test-Path $key)) { continue }
+    $props = Get-ItemProperty $key
+    foreach ($prop in $props.PSObject.Properties) {
+        if ($prop.Name -match '(?i)sysmem|fallback') {
+            $policyKeys += [pscustomobject]@{ key = $key; name = $prop.Name; value = "$($prop.Value)" }
+        }
     }
 }
-Write-Output "  (ถ้าไม่มีคีย์ = ยังใช้ค่า default ของไดรเวอร์)"
+if ($policyKeys.Count -gt 0) { $policy = 'configured' }
+
+if ($Json) {
+    $out = [pscustomobject]@{
+        counters        = $counters
+        counter_error   = $counterError
+        smi             = $smi
+        sysmem_fallback = $policy
+        policy_keys     = $policyKeys
+    }
+    $out | ConvertTo-Json -Depth 5 -Compress
+    exit 0
+}
+
+Write-Output "## GPU Process Memory (Dedicated, MB)"
+if ($counterError) { Write-Output "  อ่าน counter ไม่ได้: $counterError" }
+$sorted = $counters | Sort-Object mib -Descending
+if (-not $sorted) { Write-Output "  (ไม่มีข้อมูล)" }
+foreach ($r in ($sorted | Select-Object -First 15)) {
+    Write-Output ("  {0,6} MB  {1}" -f $r.mib, $r.instance)
+}
+Write-Output ("  --- รวมทุกโปรเซส: {0} MB" -f (($sorted | Measure-Object -Property mib -Sum).Sum))
+
+Write-Output ""
+Write-Output "## nvidia-smi"
+if ($smi) {
+    Write-Output ("  total, used, reserved, free (MiB) = {0}, {1}, {2}, {3}" -f `
+        $smi.total_mib, $smi.used_mib, $smi.reserved_mib, $smi.free_mib)
+} else {
+    Write-Output "  อ่านไม่ได้"
+}
+
+Write-Output ""
+Write-Output "## sysmem fallback policy: $policy"
+foreach ($k in $policyKeys) { Write-Output ("  {0} = {1}" -f $k.name, $k.value) }

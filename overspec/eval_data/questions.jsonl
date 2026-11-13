@@ -1,0 +1,25 @@
+{"id": "thai-01", "tag": "thai", "prompt": "7 คูณ 8 เท่ากับเท่าไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "^\\D{0,20}56\\D{0,5}$"}}
+{"id": "thai-02", "tag": "thai", "prompt": "ราคา 250 บาท ลด 20% เหลือกี่บาท ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "200"}}
+{"id": "thai-03", "tag": "thai", "prompt": "จำนวนเฉพาะที่มากกว่า 10 และน้อยกว่า 20 มีกี่จำนวน ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "^\\D{0,20}4\\D{0,5}$"}}
+{"id": "thai-04", "tag": "thai", "prompt": "วันจันทร์บวกอีก 3 วันเป็นวันอะไร ตอบเป็นชื่อวันเท่านั้น", "expect": {"type": "contains", "value": "พฤหัส"}}
+{"id": "thai-05", "tag": "thai", "prompt": "ถ้ารถไฟออก 09:45 และถึง 12:10 ใช้เวลาเดินทางกี่นาที ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "145"}}
+{"id": "thai-06", "tag": "thai", "prompt": "คำว่า 127 เป็นเลขคี่หรือเลขคู่ ตอบคำเดียว", "expect": {"type": "contains", "value": "คี่"}}
+{"id": "thai-07", "tag": "thai", "prompt": "มีดินสอ 3 โหลกับอีก 5 แท่ง รวมกี่แท่ง ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "41"}}
+{"id": "thai-08", "tag": "thai", "prompt": "1500 หาร 4 เท่ากับเท่าไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "375"}}
+{"id": "code-01", "tag": "code", "prompt": "Python: print(len('overspec')) ให้ผลอะไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "8"}}
+{"id": "code-02", "tag": "code", "prompt": "Python: print(2**10) ให้ผลอะไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "1024"}}
+{"id": "code-03", "tag": "code", "prompt": "Python: print([x for x in range(5) if x % 2][-1]) ให้ผลอะไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "3"}}
+{"id": "code-04", "tag": "code", "prompt": "JavaScript: console.log(typeof []) พิมพ์อะไร ตอบคำเดียว", "expect": {"type": "contains", "value": "object"}}
+{"id": "code-05", "tag": "code", "prompt": "Bash: echo $((7/2)) พิมพ์อะไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "^\\D{0,10}3\\D{0,5}$"}}
+{"id": "code-06", "tag": "code", "prompt": "Python: print(bool('0')) พิมพ์อะไร ตอบคำเดียว (True หรือ False)", "expect": {"type": "contains", "value": "True"}}
+{"id": "code-07", "tag": "code", "prompt": "SQL: SELECT COUNT(*) FROM t WHERE a IS NULL กับตารางที่มี 5 แถวและ a เป็น NULL 2 แถว ให้ผลเท่าไร ตอบเป็นตัวเลขเท่านั้น", "expect": {"type": "regex", "value": "^\\D{0,20}2\\D{0,5}$"}}
+{"id": "code-08", "tag": "code", "prompt": "Python: print('ab' * 3) พิมพ์อะไร ตอบเป็นสตริงเท่านั้น", "expect": {"type": "contains", "value": "ababab"}}
+{"id": "code-09", "tag": "code", "prompt": "ใน JavaScript, 0.1 + 0.2 === 0.3 ให้ผลเป็น true หรือ false ตอบคำเดียว", "expect": {"type": "contains", "value": "false"}}
+{"id": "tool-01", "tag": "tool", "prompt": "เรียก tool ชื่อ get_weather ด้วย city=Bangkok ตอบเป็น JSON เท่านั้น ในรูป {\"name\":\"get_weather\",\"arguments\":{\"city\":\"Bangkok\"}}", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"get_weather\".*\"city\"\\s*:\\s*\"Bangkok\""}}
+{"id": "tool-02", "tag": "tool", "prompt": "เรียก tool ชื่อ read_file ด้วย path=README.md ตอบเป็น JSON เท่านั้น ในรูป {\"name\":\"read_file\",\"arguments\":{\"path\":\"README.md\"}}", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"read_file\".*\"path\"\\s*:\\s*\"README.md\""}}
+{"id": "tool-03", "tag": "tool", "prompt": "เรียก tool ชื่อ search ด้วย query=\"cuda offload\" ตอบเป็น JSON เท่านั้น", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"search\".*\"query\"\\s*:\\s*\"cuda offload\""}}
+{"id": "tool-04", "tag": "tool", "prompt": "ผู้ใช้ขอให้บวก 3 กับ 5 ให้เรียก tool calculator ด้วย expression=\"3+5\" ตอบเป็น JSON เท่านั้น", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"calculator\".*\"expression\"\\s*:\\s*\"3\\+5\""}}
+{"id": "tool-05", "tag": "tool", "prompt": "ถ้าไม่มี tool ที่ตรงกับงาน ควรตอบอะไร: {\"error\":\"...\"} หรือเดาเรียก tool มั่ว ตอบเป็น JSON ที่มีคีย์ error เท่านั้น", "expect": {"type": "regex", "value": "\"error\""}}
+{"id": "tool-06", "tag": "tool", "prompt": "เรียก tool ชื่อ set_reminder ด้วย minutes=30 และ text=\"drink water\" ตอบเป็น JSON เท่านั้น", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"set_reminder\".*\"minutes\"\\s*:\\s*30.*\"drink water\""}}
+{"id": "tool-07", "tag": "tool", "prompt": "tool get_time รับเขตเวลา ตอบเป็น JSON เรียก get_time ด้วย timezone=\"Asia/Bangkok\" เท่านั้น", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"get_time\".*\"Asia/Bangkok\""}}
+{"id": "tool-08", "tag": "tool", "prompt": "tool list_files รับ dir ตอบเป็น JSON เรียก list_files ด้วย dir=\"docs\" เท่านั้น", "expect": {"type": "regex", "value": "\"name\"\\s*:\\s*\"list_files\".*\"dir\"\\s*:\\s*\"docs\""}}

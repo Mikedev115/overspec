@@ -68,8 +68,8 @@ snapshot() -> {
   "fallback_policy": "default|prefer_no_sysmem",
 }
 ```
-- ที่มีต้นแบบแล้ว: `overspec/probe_budget.ps1` (อ่าน per-pid + nvidia-smi + policy key ได้จริง บนเครื่องนี้)
-- ที่ยังต้องเพิ่ม: DXGI `Budget` ผ่าน `Add-Type` C# ในสคริปต์เดียวกัน (ไม่ต้องติดตั้ง SDK)
+- **ทำแล้ว:** `overspec/budget.py` — DXGI ผ่าน ctypes (EnumAdapters1 → เลือกการ์ด dedicated มากสุด → QueryVideoMemoryInfo) + per-pid จาก `probe_budget.ps1` + nvidia-smi + policy
+- **วัฒน์แล้ว 13 พ.ย. 2026:** DXGI `Budget` คืน **0** แม้สร้าง D3D12/D3D11 device บน adapter แล้ว ⇒ ใช้ `nvidia-smi free − reserved` เป็นเพดานแทน (7090 MiB) และบันทึกเหตุผลใน `errors` ของ snapshot
 - **ต้องแก้ก่อนใช้ตัดสินใจ:** ผลรวมต่อ pid (1068 MB) ≠ `used` ของ nvidia-smi (644 MiB) ⇒ ต้องเลือกค่าอ้างอิงเดียวและบันทึกไว้ว่าเลือกอะไร
 
 ### M3 `overspec/plan.py` — ห่อ `llama-fit-params` ไม่ใช่เขียน planner ใหม่ (ช่อง G5)
@@ -142,17 +142,19 @@ supervise(argv) -> {"spill_ratio": 0.02, "verdict": "ok"}
 
 ## 6. ลำดับงานใหม่ (แทน `docs/plan.md` §7)
 
-| เฟส | งาน | จบเมื่อ |
+| เฟส | งาน | สถานะ |
 |---|---|---|
-| **P1** | `budget.py` (DXGI + per-pid + policy) | probe คืน 4 ค่าครบ, มีเทสต์ด้วยค่าที่วัฒน์แล้ว |
-| **P2** | `profile.py` ต่อจาก `gguf_probe.py` | แยก dense/expert ต่อ layer ของ 9B และ GLM ได้ |
-| **P3** | `plan.py` ห่อ `llama-fit-params` + นโยบาย MoE | สั่ง plan แล้วได้ argv ที่รันขึ้นจริง |
-| **P4** | `supervise.py` + spill ladder | จำลอง spill (ตั้ง `-ngl` เกิน) แล้วตรวจจับได้ |
-| **P5** | `eval.py` 25 ข้อ + gate | มีคะแนน baseline 9B Q4 |
-| **P6** | อัป mainline (moe-cache) + R1/R2 | โหลด GGUF เดิมได้ หรือรู้ว่าต้องแปลง |
-| **P7** | `govern` + routing | 1 request class ทำงานครบวง |
+| **P1** | `budget.py` (DXGI + per-pid + policy) | ✅ DXGI ทำงานได้แต่คืน 0 — ถอยไป smi; per-pid วัฒน์จริง |
+| **P2** | `profile.py` ต่อจาก `gguf_probe.py` | ✅ แยก dense/expert + KV ต่อ token; เทสต์ด้วย GGUF สังเคราะห์ |
+| **P3** | `plan.py` ห่อ `llama-fit-params` + นโยบาย MoE | ✅ วัฒน์กับ build จริง: ตรวจเองว่า build ไม่มี `--moe-cache-mib` → ออก `-ncmoe` |
+| **P4** | `supervise.py` + spill ladder | ✅ วัฒน์กับ server ปลอม: จับ spill (จอง 4458 / resident 1000) และไล่ ladder |
+| **P5** | `eval.py` 25 ข้อ + gate | ⚠️ ชุดข้อสอบ 25 ข้อ (ไทย/โค้ด/tool) + gate พร้อม; ยังไม่รันกับโมเดลจริง |
+| **P6** | อัป mainline (moe-cache) + R1/R2 | ❌ ยังไม่เริ่ม — ต้องดาวน์โหลด build mainline และทดสอบ GGUF ของ ollama |
+| **P7** | `govern` + routing | ⚠️ registry มีแล้ว (promote/reject); routing ตาม request class ยังไม่ทำ |
 
-**P1–P4 คือของที่คนอื่นยังไม่ทำ** และทำได้โดยไม่ต้องชน R1/R5 — ทำก่อน ที่เหลือต่อยอด
+**หลักฐานการวัฒน์ P1–P5:** `python -m pytest -q` → 41 passed · `python -m overspec.cli budget --human` → เพดาน 7090 MiB · `python -m overspec.cli plan runs/_probe.gguf --budget-mib 1200` → `-ngl 8 -ncmoe 1` พร้อมเตือนว่า build ไม่มี `--moe-cache-mib`
+
+**ที่ยังไม่วัฒน์กับของจริง:** ยังไม่ได้รัน 9B/GLM ผ่าน `supervise` เพราะไฟล์โมเดลอยู่นอกโปรเจกต์ (`D:\Models\ollama\blobs`) — ต้องเปิดโฟลเดอร์นั้นให้เซสชันก่อน
 
 ---
 

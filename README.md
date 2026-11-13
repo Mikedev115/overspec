@@ -55,8 +55,16 @@
 - ไม่ทำ streaming จาก SSD (7 GB/s < RAM 42.9 GB/s)
 - ทุกตัวเลขต้องมาจากการวัดบนเครื่องนี้ ไม่ cite เว็บ
 
-## คำสั่งเป้าหมาย
+## ใช้งาน
 
 ```bash
-overspec run qwen3.5-9b --reserve-ram 6GB --reserve-vram 2GB
+python -m overspec.cli budget --human                  # งบ VRAM จริง + VRAM แยกโปรเซส
+python -m overspec.cli profile model.gguf --json       # dense/expert ต่อ layer + KV ต่อ token
+python -m overspec.cli plan model.gguf --ctx 4096      # argv ที่ควรใช้ พร้อมเหตุผล
+python -m overspec.cli run model.gguf --ctx 4096       # รัน + วัฒน์ + ตรวจ spill + บันทึก config
+python -m overspec.cli eval --url http://127.0.0.1:8099 --key <config-key>   # ประตูคุณภาพ 25 ข้อ
+python -m overspec.cli registry list
+python -m pytest -q                                    # 42 เทสต์ (ไม่ต้องมีโมเดล/การ์ด)
 ```
+
+`run` จะวัฒน์ tok/s และเทียบ `CUDA0 model buffer` กับ VRAM ที่โปรเซสถือจริง ถ้า spill เกิน 10% จะไล่ลด ctx → layer → moe cache เอง

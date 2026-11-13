@@ -106,6 +106,8 @@ std::vector<size_t> fit_params_target = ... 1024*1024*1024;  // margin per devic
 ## sysmem fallback policy: ไม่พบคีย์ (ใช้ค่า default ของไดรเวอร์)
 ```
 
+**ผลการลอง DXGI ผ่าน ctypes (13 พ.ย. 2026):** `QueryVideoMemoryInfo` คืน `Budget = 0` ทั้งที่สร้าง D3D12 device และ D3D11 device บน adapter แล้ว (เลือกการ์ดถูก: RTX 5050, 7910 MiB) ⇒ ช่องว่าง G1 ยังจริง แต่การใช้งานบนเครื่องนี้ต้องถอยไปใช้ `nvidia-smi free − reserved` เป็นเพดาน (`overspec/budget.py` ทำ fallback นี้แล้ว)
+
 อ่านได้ 3 อย่างที่ไม่เคยมีใครในระบบนี้ใช้: **ใครถือ VRAM เท่าไร (แยก pid)**, **reserved ของไดรเวอร์**, และ **งบจริง** (DXGI — ยังไม่ได้เก็บค่าในรอบนี้ ต้องเรียกผ่าน COM)
 
 ข้อสังเกตที่ต้องแก้ก่อนใช้: ผลรวม counter (1068 MB) ไม่เท่ากับ `used` ของ nvidia-smi (644 MiB) ⇒ ต้องนิยาม "ค่าอ้างอิง" ให้ชัดก่อนเอาไปคิดplacement

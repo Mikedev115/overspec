@@ -6,3 +6,12 @@ runtime-upstream/
 # log และผลรันบนเครื่องนี้
 *.log
 *.out
+runs/
+
+# สถานะที่เกิดจากการรัน ไม่ใช่ซอร์ส
+configs/registry.json
+*.gguf
+
+# Python
+__pycache__/
+.pytest_cache/
