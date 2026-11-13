@@ -20,6 +20,9 @@
 - `runtime/` — llama.cpp + CUDA ที่ประกอบเอง เห็นการ์ด (`CUDA0: RTX 5050, 7070 MiB`)
 - `docs/00-พื้นฐาน-การโหลดโมเดล.md` — บทเรียน + แบบฝึก 5 ข้อที่ทดสอบแล้ว
 - `docs/plan.md` — แผน v2 (แทนที่ฉบับแรกทั้งหมด)
+- `docs/research-prior-art.md` — งานวิจัย/ของเดิมที่ทำเรื่องนี้แล้ว และช่องว่างที่เหลือ
+- `docs/architecture.md` — สถาปัตยกรรม v3 (ไม่สร้าง runtime เอง; 3 ชั้นบน llama.cpp)
+- `overspec/probe_budget.ps1` — อ่านงบ VRAM จริงของ Windows แยกตามโปรเซส
 
 **ตัวเลขที่วัดจริง**
 
