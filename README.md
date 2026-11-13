@@ -22,6 +22,7 @@
 - `docs/plan.md` — แผน v2 (แทนที่ฉบับแรกทั้งหมด)
 - `docs/research-prior-art.md` — งานวิจัย/ของเดิมที่ทำเรื่องนี้แล้ว และช่องว่างที่เหลือ
 - `docs/architecture.md` — สถาปัตยกรรม v3 (ไม่สร้าง runtime เอง; 3 ชั้นบน llama.cpp)
+- `docs/01-พื้นฐาน-llm-runtime.md` — บทเรียนคำศัพท์/กลไก สำหรับคุยกับคนทำด้านนี้
 - `overspec/probe_budget.ps1` — อ่านงบ VRAM จริงของ Windows แยกตามโปรเซส
 
 **ตัวเลขที่วัดจริง**
